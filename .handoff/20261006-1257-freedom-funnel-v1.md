@@ -5,14 +5,14 @@ generated: 2026-10-06 12:57
 goal: Affiliate marketing web app (Apps Script + GitHub) built on John Artzberger's "Free Social Funnel": short video -> bridge page -> email list -> affiliate offer. For the user as the affiliate.
 
 ## next-steps  <!-- resume here -->
-1. Open draft PR `claude/brave-knuth-hymcnx` -> `main` (repo dsc26support-beep/-JohnArtzbergeraffliate); body = feature summary + README setup; end with Claude Code footer. Then subscribe_pr_activity.
+1. (done 2026-10-06, session 2) Draft PR opened from `claude/epic-thompson-luf3cc` -> `main`; session subscribed to PR activity.
 2. Watch CI (`.github/workflows/deploy.yml` test job: `npm run check`, `npm test`).
 3. User-side (manual, not doable from sandbox): enable Apps Script API, create project, `clasp push`, run `setup()`, deploy web app, set `webAppUrl` setting, add GitHub secrets CLASPRC_JSON / SCRIPT_ID / DEPLOYMENT_ID. Steps in README.md.
 
 ## state
 - done: full v1 app — bridge pages, tracked redirects, 30-day content planner, 5-email sequence, dashboard, playbook, CI.
 - done: `main` created as orphan base (README stub, a7d11e0), merged into feature branch (f029664, -X ours keeps full README). Both pushed.
-- todo: PR not yet opened.
+- done: draft PR opened (session 2). Branch renamed to `claude/epic-thompson-luf3cc`; `claude/brave-knuth-hymcnx` is the stale copy of the same commits.
 
 ## changes
 - A src/Code.gs — doGet router (?page=admin|bridge|go|unsub), setup(), adminApi(key, action, payload) dispatcher
@@ -42,8 +42,8 @@ goal: Affiliate marketing web app (Apps Script + GitHub) built on John Artzberge
 - funnel.test.js compares VM-realm arrays via JSON.stringify (deepStrictEqual fails cross-realm)
 
 ## git
-- branch: claude/brave-knuth-hymcnx (also `main`)
-- uncommitted: .handoff/ only
+- branch: claude/epic-thompson-luf3cc (old: claude/brave-knuth-hymcnx; base `main`)
+- uncommitted: none
 - recent: f029664 merge main base; a7d11e0 initial commit (main); f1dd1a8 add Freedom Funnel app
 
 ## open-questions
