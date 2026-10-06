@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('html/Styles'); ?>
+</head>
+<body class="public">
+  <main class="card narrow">
+    <p>Taking you there now...</p>
+    <p><a id="go" class="btn" href="<?= url ?>" target="_top">Continue &rarr;</a></p>
+  </main>
+  <script>
+    var link = document.getElementById('go');
+    try { window.top.location.replace(link.href); } catch (e) { /* user clicks the button */ }
+  </script>
+</body>
+</html>

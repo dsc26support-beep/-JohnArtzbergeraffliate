@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('html/Styles'); ?>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <h1><?= brand ?></h1>
+      <span class="fine">Free Social Funnel: short video &rarr; bridge page &rarr; email list &rarr; offer</span>
+    </header>
+    <nav class="tabs" id="tabs">
+      <button data-tab="dashboard" class="on">Dashboard</button>
+      <button data-tab="offers">Offers</button>
+      <button data-tab="links">Links</button>
+      <button data-tab="content">Content Plan</button>
+      <button data-tab="leads">Leads</button>
+      <button data-tab="emails">Emails</button>
+      <button data-tab="settings">Settings</button>
+      <button data-tab="playbook">Playbook</button>
+    </nav>
+
+    <section class="panel" id="dashboard"></section>
+
+    <section class="panel hidden" id="offers">
+      <div class="card">
+        <h2>Add / edit offer</h2>
+        <form id="offerForm">
+          <div class="row2">
+            <div><label>Name</label><input name="name" required placeholder="e.g. Keto Recipe Book"></div>
+            <div><label>Slug (link id)</label><input name="slug" placeholder="auto from name"></div>
+            <div><label>Network</label><input name="network" placeholder="ClickBank, Digistore24, Amazon..."></div>
+            <div><label>Niche / topic (used in hooks)</label><input name="niche" placeholder="e.g. keto meal prep"></div>
+          </div>
+          <label>Affiliate URL (your hoplink)</label><input name="affiliateUrl" required placeholder="https://...">
+          <label>Bridge headline</label><input name="headline" placeholder="The 3-step keto plan that finally worked for me">
+          <label>Subheadline</label><input name="subhead" placeholder="Free guide + the exact tool I use">
+          <label>Bullets (one per line)</label><textarea name="bullets" placeholder="Benefit one&#10;Benefit two&#10;Benefit three"></textarea>
+          <div class="row2">
+            <div><label>YouTube video (optional)</label><input name="videoUrl" placeholder="https://youtu.be/..."></div>
+            <div><label>Button text</label><input name="cta" placeholder="Send Me The Free Guide"></div>
+          </div>
+          <p><button class="btn" type="submit">Save offer</button> <button class="btn ghost" type="reset">Clear</button></p>
+        </form>
+      </div>
+      <div class="card scroll" id="offerList"></div>
+    </section>
+
+    <section class="panel hidden" id="links"></section>
+
+    <section class="panel hidden" id="content">
+      <div class="card">
+        <h2>Generate a content plan</h2>
+        <p class="fine">One short video a day for 30 days, rotating TikTok, YouTube Shorts and Reels, with five hook styles. Every post gets its own tracked bridge link so you can see which video drives opt-ins.</p>
+        <form id="planForm" class="row2">
+          <div><label>Offer</label><select name="offer" id="planOffer"></select></div>
+          <div><label>Start date</label><input type="date" name="startDate"></div>
+          <div><label>Days</label><input type="number" name="days" value="30" min="1" max="90"></div>
+          <div><label>&nbsp;</label><button class="btn" type="submit">Generate plan</button></div>
+        </form>
+      </div>
+      <div class="card scroll" id="contentList"></div>
+    </section>
+
+    <section class="panel hidden" id="leads"><div class="card scroll" id="leadList"></div></section>
+
+    <section class="panel hidden" id="emails">
+      <div class="card">
+        <h2>Follow-up sequence</h2>
+        <p class="fine">Merge tags: {{name}} {{offer_name}} {{offer_link}} {{from_name}}. A disclosure, your mailing address and an unsubscribe link are added to every email automatically. Emails send hourly.</p>
+        <div id="seqList"></div>
+        <p>
+          <button class="btn ghost" id="addStep" type="button">+ Add email</button>
+          <button class="btn" id="saveSeq" type="button">Save sequence</button>
+          <button class="btn ghost" id="runSeq" type="button">Send due emails now</button>
+        </p>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="settings">
+      <div class="card"><h2>Settings</h2><form id="settingsForm"></form></div>
+    </section>
+
+    <section class="panel hidden" id="playbook"><?!= include('html/Playbook'); ?></section>
+  </div>
+  <?!= include('html/App.js'); ?>
+</body>
+</html>
