@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('html/Styles'); ?>
+</head>
+<body class="public">
+  <main class="card bridge">
+    <? if (brand) { ?><p class="brand"><?= brand ?></p><? } ?>
+    <h1><?= offer.headline || offer.name ?></h1>
+    <? if (offer.subhead) { ?><p class="subhead"><?= offer.subhead ?></p><? } ?>
+
+    <? if (videoId) { ?>
+      <div class="video">
+        <iframe src="https://www.youtube-nocookie.com/embed/<?= videoId ?>" title="Video"
+          allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    <? } ?>
+
+    <? if (bullets.length) { ?>
+      <ul class="bullets">
+        <? for (var i = 0; i < bullets.length; i++) { ?><li><?= bullets[i] ?></li><? } ?>
+      </ul>
+    <? } ?>
+
+    <form id="optin" autocomplete="on">
+      <input type="hidden" name="o" value="<?= offer.slug ?>">
+      <input type="hidden" name="src" value="<?= src ?>">
+      <input type="hidden" name="v" value="<?= v ?>">
+      <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <input type="text" name="name" placeholder="First name" maxlength="60">
+      <input type="email" name="email" placeholder="Best email" required>
+      <button type="submit" class="btn big"><?= offer.cta || 'Send Me The Free Guide' ?></button>
+      <p id="msg" class="msg" role="status"></p>
+      <p id="next" class="hidden"><a id="nextLink" class="btn" href="#" target="_top">Continue &rarr;</a></p>
+    </form>
+
+    <p class="fine">No spam. Unsubscribe any time.</p>
+    <? if (disclosure) { ?><p class="fine disclosure"><?= disclosure ?></p><? } ?>
+  </main>
+  <script>
+    var form = document.getElementById('optin');
+    var msg = document.getElementById('msg');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var btn = form.querySelector('button');
+      btn.disabled = true;
+      msg.textContent = 'One sec...';
+      var data = {};
+      Array.prototype.forEach.call(form.elements, function (el) { if (el.name) data[el.name] = el.value; });
+      google.script.run
+        .withSuccessHandler(function (res) {
+          if (!res.ok) { msg.textContent = res.error; btn.disabled = false; return; }
+          msg.textContent = 'You are in! Check your inbox.';
+          if (!res.url) return;
+          var link = document.getElementById('nextLink');
+          link.href = res.url;
+          document.getElementById('next').classList.remove('hidden');
+          try { window.top.location.href = res.url; } catch (err) { /* user clicks Continue */ }
+        })
+        .withFailureHandler(function () {
+          msg.textContent = 'Something went wrong. Please try again.';
+          btn.disabled = false;
+        })
+        .submitLead(data);
+    });
+  </script>
+</body>
+</html>

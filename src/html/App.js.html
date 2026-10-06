@@ -1,0 +1,227 @@
+<script>
+  var KEY = '';
+  var state = { offers: [] };
+
+  // Builds DOM nodes. Text is always set via textContent, so data is never parsed as HTML.
+  function h(tag, attrs, kids) {
+    var el = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) {
+      if (k === 'text') el.textContent = attrs[k];
+      else if (k === 'on') Object.keys(attrs.on).forEach(function (ev) { el.addEventListener(ev, attrs.on[ev]); });
+      else el.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) { if (c != null) el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return el;
+  }
+  function $(id) { return document.getElementById(id); }
+  function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); return el; }
+  function toast(text) {
+    var t = h('div', { 'class': 'toast', text: text });
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 2500);
+  }
+  function fmtDate(d) { return d ? new Date(d).toLocaleDateString() : ''; }
+  function formData(form) {
+    var o = {};
+    Array.prototype.forEach.call(form.elements, function (el) { if (el.name) o[el.name] = el.value; });
+    return o;
+  }
+
+  function api(action, payload) {
+    return new Promise(function (resolve, reject) {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(function (err) { toast(err.message || String(err)); reject(err); })
+        .adminApi(KEY, action, payload || {});
+    });
+  }
+
+  function table(headers, rows) {
+    return h('table', {}, [
+      h('thead', {}, [h('tr', {}, headers.map(function (x) { return h('th', { text: x }); }))]),
+      h('tbody', {}, rows.map(function (r) {
+        return h('tr', {}, r.map(function (c) { return h('td', {}, [c == null ? '' : c]); }));
+      }))
+    ]);
+  }
+  function copyBtn(text) {
+    return h('button', { 'class': 'btn small ghost', type: 'button', text: 'Copy', on: { click: function () {
+      navigator.clipboard.writeText(text).then(function () { toast('Copied'); });
+    } } });
+  }
+
+  // ---- Dashboard ----
+  function loadDashboard() {
+    return api('dashboard', { days: 30 }).then(function (d) {
+      var t = d.totals;
+      function stat(n, l) { return h('div', { 'class': 'card stat' }, [h('div', { 'class': 'n', text: String(n) }), h('div', { 'class': 'l', text: l })]); }
+      function breakdown(title, obj) {
+        var keys = Object.keys(obj);
+        return h('div', { 'class': 'card scroll' }, [h('h3', { text: title }),
+          keys.length ? table(['', 'Views', 'Clicks', 'Opt-ins'], keys.map(function (k) {
+            return [k, String(obj[k].views), String(obj[k].clicks), String(obj[k].optins)];
+          })) : h('p', { 'class': 'fine', text: 'No traffic yet. Post your first video!' })]);
+      }
+      var el = clear($('dashboard'));
+      el.appendChild(h('div', { 'class': 'grid' }, [
+        stat(t.views, 'Bridge views (30d)'), stat(t.optins, 'Opt-ins (30d)'), stat(d.optinRate + '%', 'Opt-in rate'),
+        stat(t.clicks, 'Offer clicks (30d)'), stat(d.leads.active, 'Active subscribers'),
+        stat(d.content.posted + '/' + d.content.planned, 'Videos posted')
+      ]));
+      el.appendChild(h('div', { 'class': 'row2', style: 'margin-top:12px' }, [breakdown('By source', t.bySource), breakdown('By offer', t.byOffer)]));
+      if (!d.webAppUrl) el.appendChild(h('p', { 'class': 'fine', text: 'Tip: set webAppUrl in Settings to your /exec URL so links are correct.' }));
+    });
+  }
+
+  // ---- Offers ----
+  function renderOffers(list) {
+    state.offers = list;
+    var sel = clear($('planOffer'));
+    list.forEach(function (o) { sel.appendChild(h('option', { value: o.slug, text: o.name })); });
+    var el = clear($('offerList'));
+    el.appendChild(h('h2', { text: 'Your offers' }));
+    if (!list.length) { el.appendChild(h('p', { 'class': 'fine', text: 'No offers yet. Add your first affiliate product above.' })); return; }
+    el.appendChild(table(['Name', 'Slug', 'Network', 'Niche', ''], list.map(function (o) {
+      return [o.name, o.slug, o.network, o.niche, h('span', {}, [
+        h('button', { 'class': 'btn small ghost', type: 'button', text: 'Edit', on: { click: function () { fillOffer(o); } } }), ' ',
+        h('button', { 'class': 'btn small ghost', type: 'button', text: 'Delete', on: { click: function () {
+          if (confirm('Delete ' + o.name + '?')) api('deleteOffer', { slug: o.slug }).then(renderOffers);
+        } } })
+      ])];
+    })));
+  }
+  function fillOffer(o) {
+    var f = $('offerForm');
+    Object.keys(o).forEach(function (k) { if (f.elements[k]) f.elements[k].value = o[k]; });
+    f.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // ---- Links ----
+  function loadLinks() {
+    return api('links').then(function (list) {
+      var el = clear($('links'));
+      if (!list.length) { el.appendChild(h('div', { 'class': 'card', text: 'Add an offer first.' })); return; }
+      list.forEach(function (o) {
+        el.appendChild(h('div', { 'class': 'card' }, [
+          h('h3', { text: o.name }),
+          h('p', { 'class': 'fine', text: 'Put the bridge link for each platform in that profile\'s bio. Never post the raw affiliate link.' }),
+          table(['Source', 'Bridge page link', ''], o.bridge.map(function (b) {
+            return [b.src, h('code', { 'class': 'link', text: b.url }), copyBtn(b.url)];
+          })),
+          h('p', {}, ['Direct tracked redirect (skips the bridge): ', h('code', { 'class': 'link', text: o.direct }), copyBtn(o.direct)])
+        ]));
+      });
+    });
+  }
+
+  // ---- Content ----
+  function renderContent(list) {
+    var el = clear($('contentList'));
+    el.appendChild(h('h2', { text: 'Content calendar' }));
+    if (!list.length) { el.appendChild(h('p', { 'class': 'fine', text: 'No posts planned yet.' })); return; }
+    el.appendChild(table(['Date', 'Platform', 'Hook', 'Script', 'Bio link', 'Status'], list.map(function (c) {
+      var sel = h('select', { on: { change: function (e) { api('setContentStatus', { id: c.id, status: e.target.value }).then(renderContent); } } },
+        ['Idea', 'Filmed', 'Posted'].map(function (s) {
+          var opt = h('option', { value: s, text: s });
+          if (s === c.status) opt.selected = true;
+          return opt;
+        }));
+      return [fmtDate(c.date), c.platform, h('strong', { text: c.hook }), h('pre', { 'class': 'script', text: c.script }),
+        h('span', {}, [copyBtn(c.link)]), sel];
+    })));
+  }
+
+  // ---- Leads ----
+  function loadLeads() {
+    return api('listLeads').then(function (list) {
+      var el = clear($('leadList'));
+      el.appendChild(h('h2', { text: 'Leads (' + list.length + ')' }));
+      el.appendChild(table(['Date', 'Name', 'Email', 'Offer', 'Source', 'Emails sent', 'Status'], list.map(function (l) {
+        return [fmtDate(l.ts), l.name, l.email, l.offer, l.src, String(Number(l.lastStep) + 1), h('span', { 'class': 'pill ' + l.status, text: l.status })];
+      })));
+    });
+  }
+
+  // ---- Emails ----
+  function renderSequence(steps) {
+    var el = clear($('seqList'));
+    steps.forEach(function (s, i) {
+      el.appendChild(h('div', { 'class': 'card seq', style: 'margin:10px 0' }, [
+        h('div', { 'class': 'row2' }, [
+          h('div', {}, [h('label', { text: 'Email ' + (i + 1) + ' - send on day' }), h('input', { type: 'number', min: '0', name: 'delayDays', value: String(s.delayDays) })]),
+          h('div', {}, [h('label', { text: ' ' }), h('button', { 'class': 'btn small ghost', type: 'button', text: 'Remove', on: { click: function (e) { e.target.closest('.seq').remove(); } } })])
+        ]),
+        h('label', { text: 'Subject' }), h('input', { name: 'subject', value: s.subject }),
+        (function () { var t = h('textarea', { name: 'body', rows: '8' }); t.value = s.body; return h('div', {}, [h('label', { text: 'Body' }), t]); })()
+      ]));
+    });
+  }
+  function collectSequence() {
+    return Array.prototype.map.call(document.querySelectorAll('#seqList .seq'), function (card) {
+      return {
+        delayDays: card.querySelector('[name=delayDays]').value,
+        subject: card.querySelector('[name=subject]').value,
+        body: card.querySelector('[name=body]').value
+      };
+    });
+  }
+
+  // ---- Settings ----
+  function renderSettings(list) {
+    var f = clear($('settingsForm'));
+    list.forEach(function (s) {
+      f.appendChild(h('label', { text: s.key }));
+      var input = s.key === 'disclosure' ? h('textarea', { name: s.key }) : h('input', { name: s.key });
+      input.value = s.value;
+      f.appendChild(input);
+    });
+    f.appendChild(h('p', {}, [h('button', { 'class': 'btn', type: 'submit', text: 'Save settings' })]));
+  }
+
+  var loaders = {
+    dashboard: loadDashboard,
+    offers: function () { return api('listOffers').then(renderOffers); },
+    links: loadLinks,
+    content: function () { return api('listContent').then(renderContent); },
+    leads: loadLeads,
+    emails: function () { return api('listSequence').then(renderSequence); },
+    settings: function () { return api('getSettings').then(renderSettings); },
+    playbook: function () {}
+  };
+
+  function show(tab) {
+    Array.prototype.forEach.call(document.querySelectorAll('#tabs button'), function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
+    Array.prototype.forEach.call(document.querySelectorAll('section.panel'), function (s) { s.classList.toggle('hidden', s.id !== tab); });
+    loaders[tab]();
+  }
+
+  function wire() {
+    $('tabs').addEventListener('click', function (e) { if (e.target.dataset.tab) show(e.target.dataset.tab); });
+    $('offerForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      api('saveOffer', formData(e.target)).then(function (list) { renderOffers(list); e.target.reset(); toast('Offer saved'); });
+    });
+    $('planForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      api('generatePlan', formData(e.target)).then(function (list) { renderContent(list); toast('Plan generated'); });
+    });
+    $('addStep').addEventListener('click', function () {
+      var steps = collectSequence();
+      steps.push({ delayDays: steps.length ? Number(steps[steps.length - 1].delayDays) + 2 : 0, subject: '', body: '' });
+      renderSequence(steps);
+    });
+    $('saveSeq').addEventListener('click', function () { api('saveSequence', { steps: collectSequence() }).then(function (s) { renderSequence(s); toast('Sequence saved'); }); });
+    $('runSeq').addEventListener('click', function () { api('runSequence').then(function (r) { toast('Sent ' + r.sent + ' email(s)'); }); });
+    $('settingsForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      api('saveSettings', formData(e.target)).then(function (list) { renderSettings(list); toast('Settings saved'); });
+    });
+  }
+
+  google.script.url.getLocation(function (loc) {
+    KEY = loc.parameter.key || '';
+    wire();
+    api('listOffers').then(renderOffers);
+    show('dashboard');
+  });
+</script>
