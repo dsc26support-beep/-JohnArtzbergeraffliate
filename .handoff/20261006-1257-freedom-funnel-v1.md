@@ -1,18 +1,18 @@
 # handoff: freedom-funnel-v1
 project: johnartzberger-affiliate
 type: apps-script
-generated: 2026-10-06 12:57
+generated: 2026-10-06 12:57 (updated 2026-10-06 after merge)
 goal: Affiliate marketing web app (Apps Script + GitHub) built on John Artzberger's "Free Social Funnel": short video -> bridge page -> email list -> affiliate offer. For the user as the affiliate.
 
 ## next-steps  <!-- resume here -->
-1. (done 2026-10-06, session 2) Draft PR opened from `claude/epic-thompson-luf3cc` -> `main`; session subscribed to PR activity.
-2. Watch CI (`.github/workflows/deploy.yml` test job: `npm run check`, `npm test`).
-3. User-side (manual, not doable from sandbox): enable Apps Script API, create project, `clasp push`, run `setup()`, deploy web app, set `webAppUrl` setting, add GitHub secrets CLASPRC_JSON / SCRIPT_ID / DEPLOYMENT_ID. Steps in README.md.
+1. User-side (manual, not doable from sandbox): enable Apps Script API, create project, `clasp push`, run `setup()`, deploy web app, set `webAppUrl` setting, add GitHub secrets CLASPRC_JSON / SCRIPT_ID / DEPLOYMENT_ID. Steps in README.md.
+2. After first deploy: smoke-test bridge page, `?page=go` redirect, opt-in + welcome email in the real Apps Script runtime (see `verified: unverified`).
+3. User-side cleanup: delete stale branch `claude/brave-knuth-hymcnx` on GitHub (sandbox proxy refused the delete). Delete `claude/epic-thompson-luf3cc` once its handoff-update PR merges.
 
 ## state
 - done: full v1 app — bridge pages, tracked redirects, 30-day content planner, 5-email sequence, dashboard, playbook, CI.
 - done: `main` created as orphan base (README stub, a7d11e0), merged into feature branch (f029664, -X ours keeps full README). Both pushed.
-- done: draft PR opened (session 2). Branch renamed to `claude/epic-thompson-luf3cc`; `claude/brave-knuth-hymcnx` is the stale copy of the same commits.
+- done: PR dsc26support-beep/-JohnArtzbergeraffliate#1 merged into `main` 2026-10-06 (merge commit 1b019ed). CI `test` green; `deploy` skips until secrets exist.
 
 ## changes
 - A src/Code.gs — doGet router (?page=admin|bridge|go|unsub), setup(), adminApi(key, action, payload) dispatcher
@@ -42,9 +42,10 @@ goal: Affiliate marketing web app (Apps Script + GitHub) built on John Artzberge
 - funnel.test.js compares VM-realm arrays via JSON.stringify (deepStrictEqual fails cross-realm)
 
 ## git
-- branch: claude/epic-thompson-luf3cc (old: claude/brave-knuth-hymcnx; base `main`)
+- branch: `main` holds everything (1b019ed). `claude/epic-thompson-luf3cc` reset to main for this note only.
+- stale: `claude/brave-knuth-hymcnx` (fully merged; delete on GitHub)
 - uncommitted: none
-- recent: f029664 merge main base; a7d11e0 initial commit (main); f1dd1a8 add Freedom Funnel app
+- recent: 1b019ed merge PR #1; 02d0ca5 handoff PR opened; cd63d24 handoff v1
 
 ## open-questions
 - None blocking. Later ideas: custom domain for bridge pages, external ESP for larger lists.
